@@ -1,0 +1,6 @@
+If you base your practical work on the following code, the main points you should implement additionally are (non exhaustive):
+- acquiring the seed user data set of 500+ Last.fm users and their corresponding listening events
+- clean the artist names (e.g. match to the https://musicbrainz.org/ database)
+- implement a CF recommender that considers more than just the 1 nearest neighbor (and decide on how to fuse results by individual neighbors)
+- compute F1 measure in addition to recall and precision
+- implement a baseline against which you can compare your CF approach
