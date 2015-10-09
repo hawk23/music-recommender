@@ -8,7 +8,7 @@ OUTPUT_DIR = "./user_info/"
 USER_FILE = "./seed_users.csv"
 
 LASTFM_API_URL = "http://ws.audioscrobbler.com/2.0/"
-LASTFM_API_KEY = ""                     # enter your API key
+LASTFM_API_KEY = "57ee3318536b23ee81d6b27e36997cde"                     # enter your API key
 
 # Read input file of user names
 def read_user_file(uf):
