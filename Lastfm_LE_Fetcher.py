@@ -10,7 +10,7 @@ import json
 
 # Parameters
 LASTFM_API_URL = "http://ws.audioscrobbler.com/2.0/"
-LASTFM_API_KEY = ""                     # enter your API key
+LASTFM_API_KEY = "57ee3318536b23ee81d6b27e36997cde"                     # enter your API key
 LASTFM_OUTPUT_FORMAT = "json"
 
 MAX_PAGES = 5                           # maximum number of pages per user
@@ -29,6 +29,7 @@ def read_users(users_file):
         for row in reader:
             users.append(row[0])
     return users
+
 
 # Function to call Last.fm API: Users.getRecentTrack
 def lastfm_api_call_getLEs(user, output_dir):
@@ -63,6 +64,18 @@ def lastfm_api_call_getLEs(user, output_dir):
 
     # Return all content retrieved for given user
     return content_merged
+
+
+def lastfm_api_call_getTopArtists():
+    # TODO write function
+
+    return 0
+
+
+def lastfm_api_call_getTopUsers():
+    # TODO write function
+
+    return 0
 
 
 # Main program
