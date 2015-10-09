@@ -14,8 +14,10 @@ LASTFM_API_KEY = "57ee3318536b23ee81d6b27e36997cde"                     # enter 
 LASTFM_OUTPUT_FORMAT = "json"
 
 MAX_PAGES = 5                           # maximum number of pages per user
+MAX_ARTISTS = 50                       # maximum number of top artists to fetch
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
+# TODO change file parameter
 USERS_FILE = "./seed_users_5.csv"         # text file containing Last.fm user names
 OUTPUT_DIRECTORY = "./"                   # directory to write output to
 LE_FILE = "./LE.txt"                      # aggregated listening events
@@ -66,10 +68,30 @@ def lastfm_api_call_getLEs(user, output_dir):
     return content_merged
 
 
+# ADDED THIS NEW FUNCTION
+# Function to call Last.fm API: Chart.getTopArtists
 def lastfm_api_call_getTopArtists():
-    # TODO write function
+    content_merged = []        # empty list
 
-    return 0
+    # Construct API call
+    url = LASTFM_API_URL + "?method=chart.gettopartists" + \
+          "&format=" + LASTFM_OUTPUT_FORMAT + \
+          "&api_key=" + LASTFM_API_KEY + \
+          "&limit=" + str(MAX_ARTISTS)
+
+    content = urllib.urlopen(url).read()
+
+    # Add retrieved content of current page to merged content variable
+    content_merged.append(content)
+
+    print json.load(content)
+
+
+    # Write content to local file
+    output_file = "./test.txt"
+    file_out = open(output_file, 'w')
+    file_out.write(content)
+    file_out.close()
 
 
 def lastfm_api_call_getTopUsers():
@@ -80,6 +102,9 @@ def lastfm_api_call_getTopUsers():
 
 # Main program
 if __name__ == '__main__':
+
+    lastfm_api_call_getTopArtists()
+
     # Create output directory if non-existent
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
