@@ -18,8 +18,7 @@ MAX_ARTISTS = 50                        # maximum number of top artists to fetch
 MAX_FANS = 10                           # maximum number of fans per artist
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
-# TODO change file parameter
-USERS_FILE = "./seed_users_5.csv"         # text file containing Last.fm user names
+USERS_FILE = "./seed_users.csv"         # text file containing Last.fm user names
 OUTPUT_DIRECTORY = "./"                   # directory to write output to
 LE_FILE = "./LE.txt"                      # aggregated listening events
 
@@ -129,11 +128,33 @@ def lastfm_api_call_getTopFans(artist_list):
     file_out.close()
 
 
+# ADDED THIS NEW FUNCTION
+# Function to call Last.fm API: Artist.getTopFans
+def lastfm_api_call_getFriends(user):
+    content_merged = []         # empty list
+    friend_list = []            # empty list
+
+    # Construct API call
+    url = LASTFM_API_URL + "?method=user.getfriends" + \
+        "&api_key=" + LASTFM_API_KEY + \
+        "&user=" + str(user) + \
+        "&format=" + LASTFM_OUTPUT_FORMAT
+
+    _content = urllib.urlopen(url).read()
+
+    # Add retrieved content of current page to merged content variable
+    content_merged.append(_content)
+    json_content = json.loads(_content)
+
+    if "friends" in json_content.keys():
+        for _friend in json_content["friends"]["user"]:
+            friend_list.append(_friend["name"].encode("utf-8"))
+
+    return friend_list
+
+
 # Main program
 if __name__ == '__main__':
-
-    artist_list = lastfm_api_call_getTopArtists()
-    lastfm_api_call_getTopFans(artist_list)
 
     # Create output directory if non-existent
     if not os.path.exists(OUTPUT_DIRECTORY):
@@ -141,6 +162,12 @@ if __name__ == '__main__':
 
     # Read users from provided file
     users = read_users(USERS_FILE)
+    user_list = []
+    user_list.extend(users)
+
+    # Find friends from existing users to receive around 500 users
+    for _user in users:
+        user_list.extend(lastfm_api_call_getFriends(_user))
 
     # Create list to hold all listening events
     LEs = []
