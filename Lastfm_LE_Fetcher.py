@@ -19,7 +19,8 @@ MAX_ARTISTS = 50                        # maximum number of top artists to fetch
 MAX_FANS = 10                           # maximum number of fans per artist
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
-GET_NEW_USERS = False                    # set to True if new users should be retrieved
+MAX_LE = 500                            # maximum number of user for fetching
+GET_NEW_USERS = False                   # set to True if new users should be retrieved
 USERS_FILE = "./seed_users.csv"         # text file containing Last.fm user names
 
 OUTPUT_DIRECTORY = "./"                 # directory to write output to
@@ -198,7 +199,7 @@ if __name__ == '__main__':
     LEs = []
 
     # For all users, retrieve listening events
-    for u in range(0, len(users)):
+    for u in range(0, MAX_LE):
         print 'Fetching listening events for user #' + str(u+1) + ': ' + users[u] + ' ...'
         content = lastfm_api_call_getLEs(users[u], OUTPUT_DIRECTORY + "/listening_events/")
 
