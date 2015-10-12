@@ -6,6 +6,7 @@ import os
 import urllib
 import csv
 import json
+import shutil
 
 
 # Parameters
@@ -18,11 +19,12 @@ MAX_ARTISTS = 50                        # maximum number of top artists to fetch
 MAX_FANS = 10                           # maximum number of fans per artist
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
-GET_NEW_USERS = True                   # set to True if new users should be retrieved
+GET_NEW_USERS = False                    # set to True if new users should be retrieved
 USERS_FILE = "./seed_users.csv"         # text file containing Last.fm user names
 
-OUTPUT_DIRECTORY = "./"                   # directory to write output to
-LE_FILE = "./LE.txt"                      # aggregated listening events
+OUTPUT_DIRECTORY = "./"                 # directory to write output to
+OUTPUT_FILE = "./users.txt"             # file to write output
+LE_FILE = "./LE.txt"                    # aggregated listening events
 
 
 # Simple function to read content of a text file into a list
@@ -167,7 +169,7 @@ if __name__ == '__main__':
     user_list = users
     data = ""
 
-    if GET_NEW_USERS:   # if you want to retrieve new users
+    if (not os.path.exists(OUTPUT_FILE)) or GET_NEW_USERS:   # if you want to retrieve new users
         # Find friends from existing users to receive more than 500 users
         for _user in users:
             print "fetching friends of " + _user.encode("utf-8")
@@ -178,13 +180,17 @@ if __name__ == '__main__':
 
             print "finished " + _user.encode("utf-8")
 
+        if os.path.exists(OUTPUT_FILE):
+            shutil.rmtree(OUTPUT_FILE)
+
         # Write content to local file
-        output_file = "./users.txt"
-        file_out = open(output_file, 'w')
+        file_out = open(OUTPUT_FILE, 'w')
         file_out.write(data)
         file_out.close()
 
-        users = read_users("./users.txt")
+        users = read_users(OUTPUT_FILE)
+    else:
+        users = read_users(OUTPUT_FILE)
 
     print "\n"
 
@@ -215,11 +221,9 @@ if __name__ == '__main__':
                     # Add listening event to aggregated list of LEs
                     LEs.append([users[u], artist.encode('utf8'), track.encode('utf8'), str(time)])
 
-
         except KeyError:                    # JSON tag not found
             print "JSON tag not found!"
             continue
-
 
     # Write retrieved listening events to text file
     with open(LE_FILE, 'w') as outfile:             # "a" to append
