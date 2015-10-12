@@ -18,7 +18,9 @@ MAX_ARTISTS = 50                        # maximum number of top artists to fetch
 MAX_FANS = 10                           # maximum number of fans per artist
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
+GET_NEW_USERS = True                   # set to True if new users should be retrieved
 USERS_FILE = "./seed_users.csv"         # text file containing Last.fm user names
+
 OUTPUT_DIRECTORY = "./"                   # directory to write output to
 LE_FILE = "./LE.txt"                      # aggregated listening events
 
@@ -162,12 +164,29 @@ if __name__ == '__main__':
 
     # Read users from provided file
     users = read_users(USERS_FILE)
-    user_list = []
-    user_list.extend(users)
+    user_list = users
+    data = ""
 
-    # Find friends from existing users to receive around 500 users
-    for _user in users:
-        user_list.extend(lastfm_api_call_getFriends(_user))
+    if GET_NEW_USERS:   # if you want to retrieve new users
+        # Find friends from existing users to receive more than 500 users
+        for _user in users:
+            print "fetching friends of " + _user.encode("utf-8")
+            user_list = lastfm_api_call_getFriends(_user)
+
+            for u in user_list:
+                data += u.encode("utf-8") + "\n"
+
+            print "finished " + _user.encode("utf-8")
+
+        # Write content to local file
+        output_file = "./users.txt"
+        file_out = open(output_file, 'w')
+        file_out.write(data)
+        file_out.close()
+
+        users = read_users("./users.txt")
+
+    print "\n"
 
     # Create list to hold all listening events
     LEs = []
