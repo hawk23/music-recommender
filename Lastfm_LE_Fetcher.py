@@ -14,7 +14,8 @@ LASTFM_API_KEY = "57ee3318536b23ee81d6b27e36997cde"                     # enter 
 LASTFM_OUTPUT_FORMAT = "json"
 
 MAX_PAGES = 5                           # maximum number of pages per user
-MAX_ARTISTS = 50                       # maximum number of top artists to fetch
+MAX_ARTISTS = 50                        # maximum number of top artists to fetch
+MAX_FANS = 10                           # maximum number of fans per artist
 MAX_EVENTS_PER_PAGE = 200               # maximum number of listening events to retrieve per page
 
 # TODO change file parameter
@@ -83,27 +84,56 @@ def lastfm_api_call_getTopArtists():
 
     # Add retrieved content of current page to merged content variable
     content_merged.append(content)
+    json_content = json.loads(content)
 
-    print json.load(content)
+    artist_list = []
 
+    for _artist in range(0, MAX_ARTISTS):
+        artist_list.append((json_content["artists"]["artist"][_artist]["name"]).encode("utf-8"))
 
     # Write content to local file
-    output_file = "./test.txt"
+    # output_file = "./topartist.txt"
+    # file_out = open(output_file, 'w')
+    # file_out.write(artist_list)
+    # file_out.close()
+
+    return artist_list
+
+
+# ADDED THIS NEW FUNCTION
+# Function to call Last.fm API: Artist.getTopFans
+def lastfm_api_call_getTopFans(artist_list):
+    content_merged = []        # empty list
+    user_list = ""
+
+    # Construct API call
+    for _artist in range(0, MAX_ARTISTS):
+        url = LASTFM_API_URL + "?method=artist.gettopfans" + \
+          "&api_key=" + LASTFM_API_KEY + \
+          "&artist=" + artist_list[_artist] + \
+          "&format=" + LASTFM_OUTPUT_FORMAT
+
+        _content = urllib.urlopen(url).read()
+
+        # Add retrieved content of current page to merged content variable
+        content_merged.append(_content)
+        json_content = json.loads(_content)
+
+        for _user in range(0, MAX_FANS):
+            user_list += (json_content["topfans"]["user"][_user]["name"]).encode("utf-8") + '\n'
+
+    # Write content to local file
+    output_file = "./users.txt"
     file_out = open(output_file, 'w')
-    file_out.write(content)
+    file_out.write(artist_list)
     file_out.close()
-
-
-def lastfm_api_call_getTopUsers():
-    # TODO write function
-
-    return 0
 
 
 # Main program
 if __name__ == '__main__':
 
-    lastfm_api_call_getTopArtists()
+    artist_list = lastfm_api_call_getTopArtists()
+    lastfm_api_call_getTopFans(artist_list)
 
     # Create output directory if non-existent
     if not os.path.exists(OUTPUT_DIRECTORY):
