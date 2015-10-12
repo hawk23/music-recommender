@@ -6,6 +6,7 @@ __author__ = 'mms'
 import csv
 import numpy as np
 from sklearn import cross_validation  # machine learning & evaluation module
+from random import randint
 
 # Parameters
 UAM_FILE = "UAM.txt"                # user-artist-matrix (UAM)
@@ -80,9 +81,35 @@ def recommend_CF(UAM, seed_uidx, seed_aidx_train):
     # or alternatively, convert to a numpy array by ...
     # artist_idx_n.arrnp.setdiff1d(np.array(artist_idx_n), np.array(artist_idx_u))
 
+#    print "training-set: " + str(seed_aidx_train)
+#    print "recommended: " + str(recommended_artists_idx)
+
     # Return list of recommended artist indices
     return recommended_artists_idx
 
+# This function defines a baseline recommender, which selects a random number of artists
+# the seed user hasn't listened yet and returns these. Since this function is used with
+# a cross fold validation all artists not in the seed_aidx_train set are artists the
+# user hasn't listened to.
+def recommend_baseline (UAM, seed_uidx, seed_aidx_train):
+    # UAM               user-artist-matrix
+    # seed_uidx         user index of seed user
+
+    # Get list of artist indices the user hasn't listened yet
+    all_artists_idx = range(0, len(UAM[0,:]))
+    not_listened = np.setdiff1d(all_artists_idx, seed_aidx_train)
+
+    # get number of artists to recommend
+    num_recommend = randint(1,len(not_listened))
+
+    # recommend artists
+    recommended_artists_idx = [not_listened[randint(0,len(not_listened)-1)] for _ in range(num_recommend)]
+
+#    print "not_listened: " + str(len(not_listened)) +" num_recommended: " + str(num_recommend) + " len(recommended_artists_idx): " + str(len(recommended_artists_idx))
+#    print "recommended: "+ str(recommended_artists_idx)
+
+    # return result with possible duplicates removed
+    return list(set(recommended_artists_idx))
 
 # Main program
 if __name__ == '__main__':
@@ -113,7 +140,8 @@ if __name__ == '__main__':
                 len(train_aidx)) + ", Test items: " + str(len(test_aidx)),      # the comma at the end avoids line break
             # Call recommend function
             copy_UAM = UAM.copy()       # we need to create a copy of the UAM, otherwise modifications within recommend function will effect the variable
-            rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
+#            rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
+            rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
             print "Recommended items: ", len(rec_aidx)
 
             # Compute performance measures
