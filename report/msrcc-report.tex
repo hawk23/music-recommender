@@ -15,6 +15,13 @@
 
 % Package to generate and customize Algorithm as per ACM style
 \usepackage[ruled]{algorithm2e}
+
+% Own packages
+\usepackage[utf8]{inputenc} % for German quotation marks
+\usepackage[ngerman]{babel} % for German Umlaute
+\usepackage{listings} % for source code
+\lstset{numbers=left, numberstyle=\tiny, numbersep=5pt} \lstset{language=Python}
+
 \renewcommand{\algorithmcfname}{ALGORITHM}
 \SetAlFnt{\small}
 \SetAlCapFnt{\small}
@@ -101,6 +108,30 @@ This is a lot of bottom stuff.
 \section{Introduction}
 
 \subsection{Problem Formulation}
+
+\section{Similarity Miner}
+%main methode ->  inputparameter
+%Indexwörterbuch (welches)
+%Term Weighting -> standard und alternativ
+%Similarity Measure -> jaccard, cosine
+
+
+
+\subsection{Preprocessing}
+Für das Preprocessing, dass die HTML-Dokumente verarbeitet um zu einem Bag of Words für jeden Künstler zu gelangen, wurde der bereitgestellte Code verwendet. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessing wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern gespeichert. Aufgrunddessen das mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock}.
+
+Aufgrund der Verwendung eines Musikwörterbuchs (später unser Term Index) müssen auch die Index Terme das Preprocessing durchlaufen, damit gleiche Terme korrekt erkannt werden. Andernfalls würden beispielsweise \glqq durchfuhrung\grqq (das Ergebnis des Preprocessing auf das Künstlerdokument) mit \glqq Durchfuhrung\grqq (aus dem Musikwörterbuch) verglichen werden.
+
+\subsection{Term Weighting}
+Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Weight Function Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
+$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnisse für diesen Künstler als Values. 
+Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glqq four\grqq vom Künstler \glqq Alicia Keys\grqq zugreifen:
+\begin{lstlisting}[]
+    print artists_with_terms_count['Alicia Keys']['four']
+\end{lstlisting}
+
+
+
 
 \section{Performance Evaluation}
 
