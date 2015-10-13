@@ -62,3 +62,9 @@ UAM_artists.txt
 UAM_users.txt
 listening_events/
 user_info/
+
+# Latex files
+*.aux
+*.bbl
+*.blg
+*.synctex.gz
