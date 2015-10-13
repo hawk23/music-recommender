@@ -172,7 +172,7 @@ Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glq
 
 
 \section{Music Recommendation}
-In der Aufgabenstellung B wurde verlangt ein Musik Empfehlungssystem zu implementieren und zu evaluieren. Nachdem bereits ein großer Teil des Musik Empfehlungssystems vorgegeben wurde, haben wir uns auf die offenen Punkte fokussiert. Damit das Empfehlungssystem funktioniert, werden als erstes Eingabedaten gebraucht. Die bereitgestellte Datei seed\_users.txt stellt bereits einige Benutzernamen zur Verfügung, jedoch enthält diese nicht die empfohlene Benutzeranzahl von zumindest fünf hundert. Daher haben wir uns im ersten Schritt damit beschäftigt diese Mindestanforderungen zu erfüllen. Nachdem die Aufgabenstellung das Verwenden des LastFM Frameworks verlangte und keiner zuvor damit gearbeitet hat, haben wir uns einen Account angelegt und versucht einen API Schlüssel zu beantragen. Leider scheiterten wir bereits in diesem Schritt, da durch den derzeitigen Umbau des Frameworks einige Links nicht mehr verfügbar waren. Relativ bald haben wir jedoch einen alten API Schlüssel von einem anderen Programmierer im Internet gefunden und haben uns vorübergehend erlaubt diesen zu verwenden. Während dem Einarbeiten in die vom LastFM Framework bereitgestellten Webservices, haben wir bereits einige passende Funktionen für unsere Aufgabenstellung gefunden. Unter diesen Funktionen waren beispielsweise die folgenden:
+In der Aufgabenstellung B wurde verlangt ein Musik Empfehlungssystem zu implementieren und zu evaluieren. Nachdem bereits ein großer Teil des Musik Empfehlungssystems vorgegeben wurde, haben wir uns auf die offenen Punkte fokussiert. Damit das Empfehlungssystem funktioniert, werden als erstes Eingabedaten gebraucht. Die bereitgestellte Datei seed\_users.txt stellt bereits einige Benutzernamen zur Verfügung, jedoch enthält diese nicht die empfohlene Benutzeranzahl von zumindest fünf hundert. Daher haben wir uns im ersten Schritt damit beschäftigt diese Mindestanforderungen zu erfüllen. Nachdem die Aufgabenstellung das Verwenden der LastFM API verlangte und keiner zuvor damit gearbeitet hat, haben wir uns einen Account angelegt und versucht einen API Schlüssel zu beantragen. Leider scheiterten wir bereits in diesem Schritt, da durch den derzeitigen Umbau der API einige Links nicht mehr verfügbar waren. Relativ bald haben wir jedoch einen alten API Schlüssel von einem anderen Programmierer im Internet gefunden und haben uns vorübergehend erlaubt diesen zu verwenden. Während dem Einarbeiten in die von der LastFM API bereitgestellten Funktionalität, haben wir bereits einige passende Funktionen für unsere Aufgabenstellung gefunden. Unter diesen Funktionen waren beispielsweise die folgenden:
 
 \begin{itemize}
 \item \textbf{Chart.GetTopArtists()} haben wir verwendet um eine eindeutige Liste von den in den Charts derzeit führenden Künstlern abzurufen.
@@ -254,17 +254,36 @@ def lastfm_api_call_getFriends(user):
 \end{python}
 \end{itemize}
 
-Nach unseren ersten Testläufen mussten wir jedoch feststellen, dass gewisse von uns verwendete Methode keine validen Ergebnisse zurückliefern. Nach längerer Quellcodeanalyse und Recherche im Internet fanden wir heraus, dass der Fehler nicht in unserem Programm, sondern am derzeitigen Umbau des Frameworks lag. Gewisse verwendete Funktionen wurden nämlich noch nicht vollständig funktionsfähig portiert. Nach längerem Herumspielen, welche Funktionen nun wirklich verfügbar waren, hatten wir schlussendlich als Erfolgserlebnis die Mindestanforderungen der Eingabedaten erfüllt.
+Nach unseren ersten Testläufen mussten wir jedoch feststellen, dass gewisse von uns verwendete Methode keine validen Ergebnisse zurückliefern. Nach längerer Quellcodeanalyse und Recherche im Internet fanden wir heraus, dass der Fehler nicht in unserer Implementierung, sondern am derzeitigen Umbau der LastFM API lag. Gewisse verwendete Funktionen wurden nämlich noch nicht vollständig funktionsfähig portiert. Nach längerem Probieren, welche Funktionen nun wirklich verfügbar waren, hatten wir schlussendlich eine Datenbasis von xxx Usern und xxx Artists erstellt.
 
 Bevor wir den Listening Event Fetcher erneut gestartet haben, wollten wir die Verteilung der Benutzer, bezüglich Herkunft, Alter sowie den Fakt ob diese häufig aktiv sind, berücksichtigen. Hiervon haben wir uns eine Verbesserung unseres Empfehlungssystems erhofft. Leider stießen wir auch hier auf viele Probleme mit Funktionen des LastFM Frameworks. Diese Funktionen sollten wichtige Informationen über Benutzer liefern. Ferner wurden viele Benutzer durch diese Klassifizierung unbrauchbar, da keine oder falsche Informationen vorlagen, wodurch wir entschieden diese Klassifizierung wieder zu entfernen.
 
 \subsection{Validation}
 
-Um die Qualität der recommendations beurteilen zu können, haben wir eine Baseline-Methode implementiert.
+Um die Qualität der Recommendations beurteilen zu können, haben wir eine Baseline-Methode implementiert. Die Baseline-Methode wählt für den User eine zufällige Anzahl an Artists, aus für die noch keine Listening-Events (für den betreffenden User) existieren.
 
-\section{Performance Evaluation}
+\begin{python}
+# This function defines a baseline recommender, which selects a random 
+# number of artists the seed user hasn't listened yet and returns these. 
+# Since this function is used with a cross fold validation all artists 
+# not in the seed_aidx_train set are artists the user hasn't listened to.
+def recommend_baseline (UAM, seed_uidx, seed_aidx_train):
+    # UAM               user-artist-matrix
+    # seed_uidx         user index of seed user
 
-\section{Conclusions}
+    # Get list of artist indices the user hasn't listened yet
+    all_artists_idx = range(0, len(UAM[0,:]))
+    not_listened = np.setdiff1d(all_artists_idx, seed_aidx_train)
+
+    # get number of artists to recommend
+    num_recommend = randint(1,len(not_listened))
+
+    # recommend artists
+    recommended_artists_idx = [not_listened[randint(0,len(not_listened)-1)] for _ in range(num_recommend)]
+
+    # return result with possible duplicates removed
+    return list(set(recommended_artists_idx))
+\end{python}
 
 
 % Start of "Sample References" section
