@@ -51,6 +51,46 @@
 %ISSN
 %\issn{1234-56789}
 
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{9} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{9}  % for normal
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle=\ttm,
+otherkeywords={self},             % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false            % 
+}}
+
+
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
+}
+{}
+
+% Python for external files
+\newcommand\pythonexternal[2][]{{
+\pythonstyle
+\lstinputlisting[#1]{#2}}}
+
+% Python for inline
+\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
 % Document starts
 \begin{document}
 
@@ -131,7 +171,96 @@ Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glq
 \end{lstlisting}
 
 
+\section{Music Recommendation}
+In der Aufgabenstellung B wurde verlangt ein Musik Empfehlungssystem zu implementieren und zu evaluieren. Nachdem bereits ein großer Teil des Musik Empfehlungssystems vorgegeben wurde, haben wir uns auf die offenen Punkte fokussiert. Damit das Empfehlungssystem funktioniert, werden als erstes Eingabedaten gebraucht. Die bereitgestellte Datei seed\_users.txt stellt bereits einige Benutzernamen zur Verfügung, jedoch enthält diese nicht die empfohlene Benutzeranzahl von zumindest fünf hundert. Daher haben wir uns im ersten Schritt damit beschäftigt diese Mindestanforderungen zu erfüllen. Nachdem die Aufgabenstellung das Verwenden des LastFM Frameworks verlangte und keiner zuvor damit gearbeitet hat, haben wir uns einen Account angelegt und versucht einen API Schlüssel zu beantragen. Leider scheiterten wir bereits in diesem Schritt, da durch den derzeitigen Umbau des Frameworks einige Links nicht mehr verfügbar waren. Relativ bald haben wir jedoch einen alten API Schlüssel von einem anderen Programmierer im Internet gefunden und haben uns vorübergehend erlaubt diesen zu verwenden. Während dem Einarbeiten in die vom LastFM Framework bereitgestellten Webservices, haben wir bereits einige passende Funktionen für unsere Aufgabenstellung gefunden. Unter diesen Funktionen waren beispielsweise die folgenden:
 
+\begin{itemize}
+\item \textbf{Chart.GetTopArtists()} haben wir verwendet um eine eindeutige Liste von den in den Charts derzeit führenden Künstlern abzurufen.
+\begin{python}
+def lastfm_api_call_getTopArtists():
+    content_merged = []        # empty list
+
+    # Construct API call
+    url = LASTFM_API_URL + "?method=chart.gettopartists" + \
+          "&format=" + LASTFM_OUTPUT_FORMAT + \
+          "&api_key=" + LASTFM_API_KEY + \
+          "&limit=" + str(MAX_ARTISTS)
+
+    content = urllib.urlopen(url).read()
+
+    # Add retrieved content of current page to merged content variable
+    content_merged.append(content)
+    json_content = json.loads(content)
+
+    artist_list = []
+
+    for _artist in range(0, MAX_ARTISTS):
+        artist_list.append((json_content["artists"]["artist"][_artist]["name"]).encode("utf-8"))
+
+    return artist_list
+\end{python}  
+
+\item \textbf{Artist.GetTopFans()} haben wir verwendet um für einen angegeben Künstler eine eindeutige Liste von Fans (also Benutzern) abzurufen.
+\begin{python}
+def lastfm_api_call_getTopFans(artist_list):
+    content_merged = []        # empty list
+    user_list = ""
+
+    # Construct API call
+    for _artist in range(0, MAX_ARTISTS):
+        url = LASTFM_API_URL + "?method=artist.gettopfans" + \
+          "&api_key=" + LASTFM_API_KEY + \
+          "&artist=" + artist_list[_artist] + \
+          "&format=" + LASTFM_OUTPUT_FORMAT
+
+        _content = urllib.urlopen(url).read()
+
+        # Add retrieved content of current page to merged content variable
+        content_merged.append(_content)
+        json_content = json.loads(_content)
+
+        for _user in range(0, MAX_FANS):
+            user_list += (json_content["topfans"]["user"][_user]["name"]).encode("utf-8") + '\n'
+
+    # Write content to local file
+    output_file = "./users.txt"
+    file_out = open(output_file, 'w')
+    file_out.write(artist_lis
+\end{python}
+
+\item \textbf{User.GetFriends()} haben wir verwendet um für einen angegeben Benutzer eine eindeutige Liste von Freunden (also Benutzern) abzurufen.
+\begin{python}
+def lastfm_api_call_getFriends(user):
+    content_merged = []         # empty list
+    friend_list = []            # empty list
+
+    # Construct API call
+    url = LASTFM_API_URL + "?method=user.getfriends" + \
+        "&api_key=" + LASTFM_API_KEY + \
+        "&user=" + str(user) + \
+        "&format=" + LASTFM_OUTPUT_FORMAT
+
+    _content = urllib.urlopen(url).read()
+
+    # Add retrieved content of current page to merged content variable
+    content_merged.append(_content)
+    json_content = json.loads(_content)
+
+    if "friends" in json_content.keys():
+        for _friend in json_content["friends"]["user"]:
+            friend_list.append(_friend["name"].encode("utf-8"))
+
+    return friend_list
+\end{python}
+\end{itemize}
+
+Nach unseren ersten Testläufen mussten wir jedoch feststellen, dass gewisse von uns verwendete Methode keine validen Ergebnisse zurückliefern. Nach längerer Quellcodeanalyse und Recherche im Internet fanden wir heraus, dass der Fehler nicht in unserem Programm, sondern am derzeitigen Umbau des Frameworks lag. Gewisse verwendete Funktionen wurden nämlich noch nicht vollständig funktionsfähig portiert. Nach längerem Herumspielen, welche Funktionen nun wirklich verfügbar waren, hatten wir schlussendlich als Erfolgserlebnis die Mindestanforderungen der Eingabedaten erfüllt.
+
+Bevor wir den Listening Event Fetcher erneut gestartet haben, wollten wir die Verteilung der Benutzer, bezüglich Herkunft, Alter sowie den Fakt ob diese häufig aktiv sind, berücksichtigen. Hiervon haben wir uns eine Verbesserung unseres Empfehlungssystems erhofft. Leider stießen wir auch hier auf viele Probleme mit Funktionen des LastFM Frameworks. Diese Funktionen sollten wichtige Informationen über Benutzer liefern. Ferner wurden viele Benutzer durch diese Klassifizierung unbrauchbar, da keine oder falsche Informationen vorlagen, wodurch wir entschieden diese Klassifizierung wieder zu entfernen.
+
+\subsection{Validation}
+
+Um die Qualität der recommendations beurteilen zu können, haben wir eine Baseline-Methode implementiert.
 
 \section{Performance Evaluation}
 
