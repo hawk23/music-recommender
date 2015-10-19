@@ -20,7 +20,7 @@
 \usepackage[utf8]{inputenc} % for German quotation marks
 \usepackage[ngerman]{babel} % for German Umlaute
 \usepackage{listings} % for source code
-\lstset{numbers=left, numberstyle=\tiny, numbersep=5pt} \lstset{language=Python}
+\lstset{numberstyle=\tiny, numbersep=5pt} \lstset{language=Python}
 
 \renewcommand{\algorithmcfname}{ALGORITHM}
 \SetAlFnt{\small}
@@ -124,13 +124,23 @@ Aufgrund der Verwendung eines Musikwörterbuchs (später unser Term Index) müss
 
 \subsection{Term Weighting}
 Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Weight Function Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
-$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnisse für diesen Künstler als Values. 
+
+$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnissen für diesen Künstler als Values. 
 Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glqq four\grqq vom Künstler \glqq Alicia Keys\grqq zugreifen:
 \begin{lstlisting}[]
     print artists_with_terms_count['Alicia Keys']['four']
 \end{lstlisting}
 
-
+Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_documents\_containing\_term(term)} in der Klasse \texttt{TermCounter} nun dieses Dictionary. Sie überprüft für jeden Artist, ob der Wert für den Term größer 0 ist, falls ja, so wird der Counter \texttt{count} um eins erhöht.
+\begin{lstlisting}
+    @staticmethod
+    def count_documents_containing_term(term):
+        count = 0
+        for artist in artists_with_terms_count.keys():
+            if term in artists_with_terms_count[artist] and artists_with_terms_count[artist][term] > 0:
+                count += 1
+        return count
+\end{lstlisting}        
 
 
 \section{Performance Evaluation}
