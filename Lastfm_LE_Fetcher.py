@@ -7,6 +7,8 @@ import urllib
 import csv
 import json
 import shutil
+from os import listdir
+from os.path import isfile, join
 
 
 # Parameters
@@ -27,6 +29,7 @@ OUTPUT_DIRECTORY = "./"                 # directory to write output to
 OUTPUT_FILE = "./users.txt"             # file to write output
 LE_FILE = "./LE.txt"                    # aggregated listening events
 
+USE_EXISTING_LE = True                  # use already fetched LE from listening_events folder
 
 # Simple function to read content of a text file into a list
 def read_users(users_file):
@@ -157,6 +160,78 @@ def lastfm_api_call_getFriends(user):
 
     return friend_list
 
+def retrieve_listening_events(LEs, users):
+    # For all users, retrieve listening events
+    for u in range(0, MAX_LE):
+        print 'Fetching listening events for user #' + str(u+1) + ': ' + users[u] + ' ...'
+        content = lastfm_api_call_getLEs(users[u], OUTPUT_DIRECTORY + "/listening_events/")
+
+        # Parse retrieved JSON content
+        try:
+            # For all retrieved JSON pages of current user
+            for page in range(0, len(content)):
+                listening_events = json.loads(content[page])
+
+                # Get number of listening events in current JSON
+                no_items = len(listening_events["recenttracks"]["track"])
+
+                # Read artist, track names and time stamp for each listening event
+                for item in range(0, no_items):
+                    artist = listening_events["recenttracks"]["track"][item]["artist"]["#text"]
+                    track = listening_events["recenttracks"]["track"][item]["name"]
+                    time = listening_events["recenttracks"]["track"][item]["date"]["uts"]
+#                    print users[u], artist, track, time
+
+                    # Add listening event to aggregated list of LEs
+                    LEs.append([users[u], artist.encode('utf8'), track.encode('utf8'), str(time)])
+
+        except KeyError:                    # JSON tag not found
+            print "JSON tag not found!"
+            continue
+
+    return LEs
+
+
+def retrieve_listening_events_existing(LEs):
+    # get all listening event files
+    path = OUTPUT_DIRECTORY + "/listening_events/"
+    files = [ f for f in listdir(path) if isfile(join(path,f)) ]
+
+    # prepare dictionario which holds a list of files with LE for each user
+    userFiles = dict()
+    for file in files:
+        user = str(file[:file.rfind("_")])
+
+        if user not in userFiles:
+            userFiles[user] = []
+        userFiles[user].append(file)
+
+    # get merged LE for every user
+    for user in userFiles:
+        content = []
+        for userFile in userFiles[user]:
+            with open(path + userFile, 'r') as lefile:
+                listening_events = json.loads(lefile.read())
+
+                try:
+                    # Get number of listening events in current JSON
+                    no_items = len(listening_events["recenttracks"]["track"])
+
+                    # Read artist, track names and time stamp for each listening event
+                    for item in range(0, no_items):
+                        artist = listening_events["recenttracks"]["track"][item]["artist"]["#text"]
+                        track = listening_events["recenttracks"]["track"][item]["name"]
+                        time = listening_events["recenttracks"]["track"][item]["date"]["uts"]
+                        print user, artist, track, time
+
+                        # Add listening event to aggregated list of LEs
+                        LEs.append([user, artist.encode('utf8'), track.encode('utf8'), str(time)])
+                except KeyError:                # JSON tag not found
+                    print "JSON tag not found!"
+                    continue
+
+    return LEs
+
 
 # Main program
 if __name__ == '__main__':
@@ -198,33 +273,13 @@ if __name__ == '__main__':
     # Create list to hold all listening events
     LEs = []
 
-    # For all users, retrieve listening events
-    for u in range(0, MAX_LE):
-        print 'Fetching listening events for user #' + str(u+1) + ': ' + users[u] + ' ...'
-        content = lastfm_api_call_getLEs(users[u], OUTPUT_DIRECTORY + "/listening_events/")
+    if USE_EXISTING_LE:
+        LEs = retrieve_listening_events_existing(LEs)
+        pass
+    else:
+        LEs = retrieve_listening_events(LEs, users)
+        pass
 
-        # Parse retrieved JSON content
-        try:
-            # For all retrieved JSON pages of current user
-            for page in range(0, len(content)):
-                listening_events = json.loads(content[page])
-
-                # Get number of listening events in current JSON
-                no_items = len(listening_events["recenttracks"]["track"])
-
-                # Read artist, track names and time stamp for each listening event
-                for item in range(0, no_items):
-                    artist = listening_events["recenttracks"]["track"][item]["artist"]["#text"]
-                    track = listening_events["recenttracks"]["track"][item]["name"]
-                    time = listening_events["recenttracks"]["track"][item]["date"]["uts"]
-#                    print users[u], artist, track, time
-
-                    # Add listening event to aggregated list of LEs
-                    LEs.append([users[u], artist.encode('utf8'), track.encode('utf8'), str(time)])
-
-        except KeyError:                    # JSON tag not found
-            print "JSON tag not found!"
-            continue
 
     # Write retrieved listening events to text file
     with open(LE_FILE, 'w') as outfile:             # "a" to append
