@@ -158,18 +158,19 @@ This is a lot of bottom stuff.
 
 
 \subsection{Preprocessing}
-Für das Preprocessing, dass die HTML-Dokumente verarbeitet um zu einem Bag of Words für jeden Künstler zu gelangen, wurde der bereitgestellte Code verwendet. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessing wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern gespeichert. Aufgrunddessen das mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock}.
+Für das Preprocessing wurde der bereitgestellte Code verwendet. Dieses verarbeitet die HTML-Dokumente um zu einem Bag of Words für jeden Künstler zu gelangen. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessings wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern als Value gespeichert. Aufgrunddessen dass mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock} gelockt.
 
 Aufgrund der Verwendung eines Musikwörterbuchs (später unser Term Index) müssen auch die Index Terme das Preprocessing durchlaufen, damit gleiche Terme korrekt erkannt werden. Andernfalls würden beispielsweise \glqq durchfuhrung\grqq (das Ergebnis des Preprocessing auf das Künstlerdokument) mit \glqq Durchfuhrung\grqq (aus dem Musikwörterbuch) verglichen werden.
 
 \subsection{Term Weighting}
-Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Weight Function Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
+Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Gewichtungsfunktion Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
 
-$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnissen für diesen Künstler als Values. 
+$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird in dem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnissen für diesen Künstler als Values. 
 Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glqq four\grqq vom Künstler \glqq Alicia Keys\grqq zugreifen:
 \begin{python}
     print artists_with_terms_count['Alicia Keys']['four']
 \end{python}
+Aufgrund der Verwendung eines Dictionaries wird gesichert, dass die Termreihenfolge eindeutig bestimmt ist, da eine Hashfunktion verwendet wird um einen Term auf die Position zu mappen. Die Reihenfolge der Terme ist zwar nicht lexikalisch geordnet, aber für jeden Künstler gleich. Dies kann man auch beobachten, wenn man sich die bei der Ausführung erstellte Datei /data/similarities/counts anschaut.
 
 Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_documents\_containing\_term(term)} in der Klasse \texttt{TermCounter} nun dieses Dictionary. Sie überprüft für jeden Artist, ob der Wert für den Term größer 0 ist, falls ja, so wird der Counter \texttt{count} um eins erhöht.
 \begin{python}
@@ -182,9 +183,9 @@ Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_document
         return count
 \end{python}       
 
-Nun können wir für jedes Dokument jedem Term im Term Index eine Gewichtung zuweisen. Dafür können verschiedene TF-IDF Funktionen verwendet werden. In unserer Implementierung wird die TF\_C mit der IDF\_B2 (die zumeist in der Praxis verwendet wird) standardmäßig verwendet. Als Alternative zu dieser Funktion wurde die TF\_C2 mit der IDF\_E implementiert. 
+Nun können wir für alle Dokumente jedem Term im Term Index eine Gewichtung zuweisen. Dafür können verschiedene TF-IDF Funktionen verwendet werden. In unserer Implementierung wird die TF\_C mit der IDF\_B2 (die zumeist in der Praxis verwendet wird) standardmäßig verwendet. Als Alternative zu dieser Funktion wurde die TF\_C2 mit der IDF\_E implementiert. 
 
-Die TF bezieht sich darum auf die zweite Monotonitäts Annahme: Die Wichtigkeit eines Terms für ein bestimmtes Dokument ist höher, wenn der Term öfters vorkommt.
+Die TF Formulierung bezieht sich auf die zweite Monotonitäts Annahme: Die Wichtigkeit eines Terms für ein bestimmtes Dokument ist höher, wenn der Term öfters vorkommt.
 Die Formel TF\_C \eqref{eq:TFC} und TF\_C2 \eqref{eq:TFC2} lauten wie folgt:
 \begin{equation}\label{eq:TFC}
   r_{d,t} = 1 + log_{e} f_{d,t}
@@ -202,15 +203,23 @@ Die IDF behandelt die erste Monotonitäts Annahme: Seltene Terme sind nicht weni
 \begin{equation}\label{eq:IDFC}
   w_{t} = \frac{1}{f_{t}}
 \end{equation}
-Beide Formeln beachten diese Monotonitäts Annahme: Ist bei IDF\_B2 \eqref{eq:IDFB2} $f_t$ kleiner, so wird die Gewichtung des IDF-Wertes logarithmisch größer. Ebenso gilt auch für IDF\_C \eqref{eq:IDFC}, dass wenn $f_t$ kleiner wird, so wird der IDF-Wert invers proportional größer und der Term somit wichtiger. Die beiden Funktionen unterscheiden sich prinzipiell in dem Logarithmus von IDF\_B2: Dies begründet sich auf Zipfs Gesetz, das besagt dass die Häufigkeit eines Wortes innerhalb eines Dokuments invers proportional zu dem Platz, in dem das Wort in der nach den Häufigkeiten sortierten Frequenztabelle ist. Die Verwendung des Logarithmus führt dazu, dass die Häufigkeiten von ganz wenigen Wörtern stark reduziert wird.
+Beide Formeln beachten diese Monotonitäts Annahme: Ist bei IDF\_B2 \eqref{eq:IDFB2} $f_t$ kleiner, so wird die Gewichtung des IDF-Wertes logarithmisch größer. Ebenso gilt auch für IDF\_C \eqref{eq:IDFC}, dass wenn $f_t$ kleiner wird, so wird der IDF-Wert invers proportional größer und der Term somit wichtiger. Die beiden Funktionen unterscheiden sich prinzipiell in dem Logarithmus von IDF\_B2: Dies begründet sich auf Zipfs Gesetz, das besagt dass die Häufigkeit eines Wortes innerhalb eines Dokuments invers proportional zu dem Platz, in dem das Wort in der nach den Häufigkeiten sortierten Frequenztabelle ist. Die Verwendung des Logarithmus führt dazu, dass die großen Vorkomnisse von ganz wenigen Wörtern stark reduziert wird.
 
-Die TF Formel wird mit der IDF Formel multipliziert und man erhält die Gewichtung. In der Klasse \texttt{WeightMeasurer} ist die Implementierung vorzufinden.  
+Die TF Formel wird mit der IDF Formel multipliziert und man erhält die Gewichtung. In der Klasse \texttt{WeightMeasurer} ist die Implementierung vorzufinden. Mittels dem zweiten optionalen Parameter der Datei /tf\_idf/main.py kann man auswählen, welche der beiden TF-IDF Funktionen angewendet werden soll (\glqq standard\_tf\_id\grqq oder \glqq alternative\_tf\_id\grqq).
 
-\section{Similarity Computation}
+\subsection{Similarity Computation}
+Um die Ähnlichkeit von zwei Künstlern zu bestimmen wird eine Ähnlichkeitsfunktion verwendet. Die bekannteste hierbei ist die Cosine Similarity (Kosinus-Ähnlichkeit) \eqref{eq:cosine}. Diese ermittelt den Abstand zweier Vektoren, wobei eine Normierung passiert, da die Länge der Dokumente berücksichtigt wird. 
+\begin{equation}\label{eq:cosine}
+  S_{d_1, d_2} = \frac{\sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}{W_{d_1} \cdot W_{d_2}}
+\end{equation}
 
- 
+Die zweite Ähnlichkeitsfunktion, die bei der Ähnlichkeitsbestimmung standardmäßig verwendet wird, ist die Jaccard-Ähnlichkeit \eqref{eg:jaccard}. Sie besteht aus demselben Zähler wie bei der Kosinus-Ähnlichkeit, unterscheidet sich jedoch im Nenner. 
+\begin{equation}\label{eq:jaccard}
+  S_{d_1, d_2} = \frac{\sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}{W_{d_1}^2 + W_{d_2}^2 - \sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}
+\end{equation}
+Die Jaccard-Ähnlichkeit wird aus der Durchschnittsmenge der beiden Vektoren (die Terme, die bei beiden Dokumenten vorkommen) dividiert durch die Vereinigung der beiden Vektoren gebildet. Bei der Implementierung ist zu beachten, dass bei der Verwendung von der Jaccard-Funktion aus Packages (z.B. das NLTK-Package) nicht berücksichtigt wird, dass die  Durchschnittsbildung auf unseren Gewichtungen und nicht auf den ursprünglichen Term-Strings passiert. Dies bedeutet, dass wenn wir unsere Gewichtvektoren zur Bestimmung der Ähnlichkeit übergeben würden, falsche Ergebnisse geliefert werden (da z.B. 0.5 und 0.7 nicht gleich sind, und somit nicht in der Durchschnittsmenge liegen, obwohl sie es aufgrund der Gemeinsamkeit des ursprünglichen Terms tun sollten).
 
-
+Die Implementierung der Jaccard- und der Kosinusfunktion sind in der Klasse \texttt{SimilarityMeasurer} zu finden. Auch hier kann man mittels der Parameterübergabe (als dritter optionaler Parameter) an die /tf\_idf/main.py bestimmen, welche der beiden Funktionen ausgeführt wird.
 
 \section{Music Recommendation}
 In der Aufgabenstellung B wurde verlangt ein Musik Empfehlungssystem zu implementieren und zu evaluieren. Nachdem bereits ein großer Teil des Musik Empfehlungssystems vorgegeben wurde, haben wir uns auf die offenen Punkte fokussiert. Damit das Empfehlungssystem funktioniert, werden als erstes Eingabedaten gebraucht. Die bereitgestellte Datei seed\_users.txt stellt bereits einige Benutzernamen zur Verfügung, jedoch enthält diese nicht die empfohlene Benutzeranzahl von zumindest fünf hundert. Daher haben wir uns im ersten Schritt damit beschäftigt diese Mindestanforderungen zu erfüllen. Nachdem die Aufgabenstellung das Verwenden der LastFM API verlangte und keiner zuvor damit gearbeitet hat, haben wir uns einen Account angelegt und versucht einen API Schlüssel zu beantragen. Leider scheiterten wir bereits in diesem Schritt, da durch den derzeitigen Umbau der API einige Links nicht mehr verfügbar waren. Relativ bald haben wir jedoch einen alten API Schlüssel von einem anderen Programmierer im Internet gefunden und haben uns vorübergehend erlaubt diesen zu verwenden. Während dem Einarbeiten in die von der LastFM API bereitgestellten Funktionalität, haben wir bereits einige passende Funktionen für unsere Aufgabenstellung gefunden. Unter diesen Funktionen waren beispielsweise die folgenden:
