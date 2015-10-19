@@ -20,6 +20,7 @@
 \usepackage[utf8]{inputenc} % for German quotation marks
 \usepackage[ngerman]{babel} % for German Umlaute
 \usepackage{listings} % for source code
+\usepackage{amsmath} % eqref
 \lstset{numbers=left, numberstyle=\tiny, numbersep=5pt} \lstset{language=Python}
 
 \renewcommand{\algorithmcfname}{ALGORITHM}
@@ -156,7 +157,6 @@ This is a lot of bottom stuff.
 %Similarity Measure -> jaccard, cosine
 
 
-
 \subsection{Preprocessing}
 Für das Preprocessing, dass die HTML-Dokumente verarbeitet um zu einem Bag of Words für jeden Künstler zu gelangen, wurde der bereitgestellte Code verwendet. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessing wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern gespeichert. Aufgrunddessen das mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock}.
 
@@ -164,11 +164,52 @@ Aufgrund der Verwendung eines Musikwörterbuchs (später unser Term Index) müss
 
 \subsection{Term Weighting}
 Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Weight Function Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
-$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnisse für diesen Künstler als Values. 
+
+$N$ ist bei uns die Anzahl der Künstler, bzw. die Anzahl der HTML-Dokumente, da für jeden Künstler ein Dokument erstellt wurde. $f_{d,t}$ und $f_t$ müssen bestimmt werden. Hierfür wird die Klasse \texttt{TermCounter} verwendet. Diese zählt für jedes Dokument bzw. Künstler die Anzahl der  Vorkomnisse jedes Terms aus dem Term Index. Dies wird einem Dictionary \texttt{artists\_with\_terms\_count} gespeichert. Die Künstler als Keys haben jeweils ein Dictionary als Values. Dieses besteht wiederum aus den Terms aus den Term Index als Keys und den Anzahl der Vorkomnissen für diesen Künstler als Values. 
 Somit kann man beispielsweise folgendermaßen auf den Vorkomnisse des Terms \glqq four\grqq vom Künstler \glqq Alicia Keys\grqq zugreifen:
-\begin{lstlisting}[]
+\begin{python}
     print artists_with_terms_count['Alicia Keys']['four']
-\end{lstlisting}
+\end{python}
+
+Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_documents\_containing\_term(term)} in der Klasse \texttt{TermCounter} nun dieses Dictionary. Sie überprüft für jeden Artist, ob der Wert für den Term größer 0 ist, falls ja, so wird der Counter \texttt{count} um eins erhöht.
+\begin{python}
+    @staticmethod
+    def count_documents_containing_term(term):
+        count = 0
+        for artist in artists_with_terms_count.keys():
+            if term in artists_with_terms_count[artist] and artists_with_terms_count[artist][term] > 0:
+                count += 1
+        return count
+\end{python}       
+
+Nun können wir für jedes Dokument jedem Term im Term Index eine Gewichtung zuweisen. Dafür können verschiedene TF-IDF Funktionen verwendet werden. In unserer Implementierung wird die TF\_C mit der IDF\_B2 (die zumeist in der Praxis verwendet wird) standardmäßig verwendet. Als Alternative zu dieser Funktion wurde die TF\_C2 mit der IDF\_E implementiert. 
+
+Die TF bezieht sich darum auf die zweite Monotonitäts Annahme: Die Wichtigkeit eines Terms für ein bestimmtes Dokument ist höher, wenn der Term öfters vorkommt.
+Die Formel TF\_C \eqref{eq:TFC} und TF\_C2 \eqref{eq:TFC2} lauten wie folgt:
+\begin{equation}\label{eq:TFC}
+  r_{d,t} = 1 + log_{e} f_{d,t}
+\end{equation}
+\begin{equation}\label{eq:TFC2}
+  r_{d,t} = log_{e} (1 + f_{d,t})
+\end{equation}
+
+Dabei sind die beiden Formeln sehr ähnlich: TF\_C hat jedoch den Nachteil, dass die Logarithmusfunktion für $f_dt$ gleich Null nicht definiert ist. In diesem Fall wird in der Implementierung für die Gewichtung dieses Terms Null zurückgegeben (da der Term somit auch nicht in dem Dokument vorkommt und keine Wichtigkeit hat). 
+
+Die IDF behandelt die erste Monotonitäts Annahme: Seltene Terme sind nicht weniger wichtig als Häufige, was insofern bedeutet dass die Wichtigkeit eines Terms für ein Dokument höher ist, wenn der Term in nur wenigen Dokumenten vorkommt.
+\begin{equation}\label{eq:IDFB2}
+  w_{t} = log_{e} \frac{N}{f_{t}}
+\end{equation}
+\begin{equation}\label{eq:IDFC}
+  w_{t} = \frac{1}{f_{t}}
+\end{equation}
+Beide Formeln beachten diese Monotonitäts Annahme: Ist bei IDF\_B2 \eqref{eq:IDFB2} $f_t$ kleiner, so wird die Gewichtung des IDF-Wertes logarithmisch größer. Ebenso gilt auch für IDF\_C \eqref{eq:IDFC}, dass wenn $f_t$ kleiner wird, so wird der IDF-Wert invers proportional größer und der Term somit wichtiger. Die beiden Funktionen unterscheiden sich prinzipiell in dem Logarithmus von IDF\_B2: Dies begründet sich auf Zipfs Gesetz, das besagt dass die Häufigkeit eines Wortes innerhalb eines Dokuments invers proportional zu dem Platz, in dem das Wort in der nach den Häufigkeiten sortierten Frequenztabelle ist. Die Verwendung des Logarithmus führt dazu, dass die Häufigkeiten von ganz wenigen Wörtern stark reduziert wird.
+
+Die TF Formel wird mit der IDF Formel multipliziert und man erhält die Gewichtung. In der Klasse \texttt{WeightMeasurer} ist die Implementierung vorzufinden.  
+
+\section{Similarity Computation}
+
+ 
+
 
 
 \section{Music Recommendation}
