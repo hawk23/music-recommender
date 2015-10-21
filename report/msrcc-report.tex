@@ -147,14 +147,14 @@ This is a lot of bottom stuff.
 
 
 \section{Introduction}
-
-\subsection{Problem Formulation}
+Um die Arbeit in der Gruppe zu erleichtern haben wir zwei Projekte auf Github angelegt. Der gesamte Source-Code ist dort einsehbar:
+\begin{itemize}
+\item \textbf{music-similarity-miner: } https://github.com/hawk23/music-similarity-miner/
+\item \textbf{music-recommender: } https://github.com/hawk23/music-recommender/
+\end{itemize}
 
 \section{Similarity Miner}
-Die Implementierung des Similarity Miners ist in dem Repository music-similarity-miner zu finden.
-
-TODO ... Webcrawler ...
-
+Die Implementierung des Similarity Miners ist in dem Repository music-similarity-miner zu finden. Wir haben uns beschlossen eine eigene Implementierung für den Similarity Miner zu schreiben und nicht die zur Verfügung gestellte Vorlage zu verwenden. Der von uns implementierte Crawler (\lstinline$music-similarity-miner\crawler$) nutzt die Suchmaschine DuckDuckGo um 80 Suchergebnisse zu jedem Artist herunterzuladen. Als Suchbegriff haben wir \lstinline$"[Artist-Name] music"$ verwendet um genauere bzw. passenderer Suchergebnisse zu erhalten. Als Output liefert der Crawler für jeden Artist ein Textfile, das die bereits heruntergeladenen Websites enthält.
 
 Das Preprocessing der HTML-Dokumente, das Term Weighting der Terme und die Bestimmung der Ähnlichkeit von zwei Künstlern wird in der /tf\_idf/main.py ausgeführt.
 Hier kann man drei Skriptparameter übergeben: 
@@ -167,7 +167,6 @@ Wenn keine Parameter übergeben werden, wird standardmäßig \texttt{'../data st
 %Indexwörterbuch (welches)
 %Term Weighting -> standard und alternativ
 %Similarity Measure -> jaccard, cosine
-
 
 \subsection{Preprocessing}
 Für das Preprocessing wurde der bereitgestellte Code verwendet. Dieses verarbeitet die HTML-Dokumente um zu einem Bag of Words für jeden Künstler zu gelangen. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessings wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern als Value gespeichert. Aufgrunddessen dass mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock} gelockt.
