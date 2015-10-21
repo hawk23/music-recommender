@@ -133,12 +133,8 @@ Peter Luca Lidl
 % We no longer use \terms command
 %\terms{Design, Algorithms, Performance}
 
-% \keywords{TODO, TODO, TODO}
-
 \begin{bottomstuff}
-This is a lot of bottom stuff.
 \end{bottomstuff}
-
 \maketitle
 
 
@@ -250,7 +246,8 @@ def lastfm_api_call_getTopArtists():
     artist_list = []
 
     for _artist in range(0, MAX_ARTISTS):
-        artist_list.append((json_content["artists"]["artist"][_artist]["name"]).encode("utf-8"))
+        artist_list.append((json_content["artists"]["artist"][_artist]["name"]) \ 
+        .encode("utf-8"))
 
     return artist_list
 \end{python}  
@@ -275,7 +272,8 @@ def lastfm_api_call_getTopFans(artist_list):
         json_content = json.loads(_content)
 
         for _user in range(0, MAX_FANS):
-            user_list += (json_content["topfans"]["user"][_user]["name"]).encode("utf-8") + '\n'
+            user_list += (json_content["topfans"]["user"][_user]["name"]) \ 
+            .encode("utf-8") + '\n'
 
     # Write content to local file
     output_file = "./users.txt"
@@ -343,7 +341,8 @@ def recommend_baseline (UAM, seed_uidx, seed_aidx_train):
     num_recommend = randint(1,len(not_listened))
 
     # recommend artists
-    recommended_artists_idx = [not_listened[randint(0,len(not_listened)-1)] for _ in range(num_recommend)]
+    recommended_artists_idx = [not_listened[randint(0,len(not_listened)-1)] \
+     for _ in range(num_recommend)]
 
     # return result with possible duplicates removed
     return list(set(recommended_artists_idx))
@@ -355,7 +354,8 @@ Der Collaborative-Filtering-Recommender wurde außerdem von uns derart erweitert
 def recommend_CF(UAM, seed_uidx, seed_aidx_train, K = 1):
     ...
 
-    # Select the k closest neighbor to seed user (which is the last but one; last one is user u herself!)
+    # Select the k closest neighbor to seed user 
+    # (which is the last but one; last one is user u herself!)
     kneighbor_idx = sort_idx[-(1+K):-1]
 
     artist_idx_n = [] # indices of artists user u's neighbor(s) listened to
