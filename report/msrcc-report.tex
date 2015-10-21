@@ -151,6 +151,18 @@ This is a lot of bottom stuff.
 \subsection{Problem Formulation}
 
 \section{Similarity Miner}
+Die Implementierung des Similarity Miners ist in dem Repository music-similarity-miner zu finden.
+
+TODO ... Webcrawler ...
+
+
+Das Preprocessing der HTML-Dokumente, das Term Weighting der Terme und die Bestimmung der Ähnlichkeit von zwei Künstlern wird in der /tf\_idf/main.py ausgeführt.
+Hier kann man drei Skriptparameter übergeben: 
+\begin{python}
+main.py [data-Ordner]['standard_tf_idf' oder 'alternative_tf_idf']
+['jaccard_measure' oder 'cosine_measure']
+\end{python}
+Wenn keine Parameter übergeben werden, wird standardmäßig \texttt{'../data standard\_tf\_idf jaccard\_measure'} als Argument gesetzt. 
 %main methode ->  inputparameter
 %Indexwörterbuch (welches)
 %Term Weighting -> standard und alternativ
@@ -160,7 +172,8 @@ This is a lot of bottom stuff.
 \subsection{Preprocessing}
 Für das Preprocessing wurde der bereitgestellte Code verwendet. Dieses verarbeitet die HTML-Dokumente um zu einem Bag of Words für jeden Künstler zu gelangen. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessings wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern als Value gespeichert. Aufgrunddessen dass mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock} gelockt.
 
-Aufgrund der Verwendung eines Musikwörterbuchs (später unser Term Index) müssen auch die Index Terme das Preprocessing durchlaufen, damit gleiche Terme korrekt erkannt werden. Andernfalls würden beispielsweise \glqq durchfuhrung\grqq (das Ergebnis des Preprocessing auf das Künstlerdokument) mit \glqq Durchfuhrung\grqq (aus dem Musikwörterbuch) verglichen werden.
+Für unseren Term Index verwenden wir das Online-Musikwörterbuch von Artopium. Dieses wurde von \url{http://musicterms.artopium.com/} heruntergeladen.
+Aufgrund der Verwendung eines Musikwörterbuchs müssen auch die Index Terme das Preprocessing durchlaufen, damit gleiche Terme korrekt erkannt werden. Andernfalls würden beispielsweise \glqq durchfuhrung\grqq (das Ergebnis des Preprocessing auf das Künstlerdokument) mit \glqq Durchfuhrung\grqq (aus dem Musikwörterbuch) verglichen werden.
 
 \subsection{Term Weighting}
 Um die Wichtigkeit von jedem Term für einen bestimmten Künstler zu bestimmen, wird das Term Weighting verwendet. Dabei wird mit der Gewichtungsfunktion Term Frequency-Inverse Document Frequency (TF-IDF) die Gewichtung bestimmt. Dafür werden für die Standard-TF-IDF zuerst die folgenden Parameter benötigt: $N$ als die Anzahl der Dokumente, $f_{d,t}$ als die Anzahl der Vorkomnisse eines Terms $t$ in einem Dokument $d$ und $f_t$ als die Anzahl der Dokumente, in dem der Term $t$ vorkommt. 
@@ -178,7 +191,7 @@ Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_document
     def count_documents_containing_term(term):
         count = 0
         for artist in artists_with_terms_count.keys():
-            if term in artists_with_terms_count[artist] and artists_with_terms_count[artist][term] > 0:
+            if term in artists_with_terms_count[artist] and \ 		       artists_with_terms_count[artist][term] > 0:
                 count += 1
         return count
 \end{python}       
@@ -186,8 +199,8 @@ Zur Bestimmung von $f_t$ verwendet die statische Methode \texttt{count\_document
 Nun können wir für alle Dokumente jedem Term im Term Index eine Gewichtung zuweisen. Dafür können verschiedene TF-IDF Funktionen verwendet werden. In unserer Implementierung wird die TF\_C mit der IDF\_B2 (die zumeist in der Praxis verwendet wird) standardmäßig verwendet. Als Alternative zu dieser Funktion wurde die TF\_C2 mit der IDF\_E implementiert. 
 
 Die TF Formulierung bezieht sich auf die zweite Monotonitäts Annahme: Die Wichtigkeit eines Terms für ein bestimmtes Dokument ist höher, wenn der Term öfters vorkommt.
-Die Formel TF\_C \eqref{eq:TFC} und TF\_C2 \eqref{eq:TFC2} lauten wie folgt:
-\begin{equation}\label{eq:TFC}
+Die Formel TF\_C \eqref{eqTFC} und TF\_C2 \eqref{eq:TFC2} lauten wie folgt:
+\begin{equation}\label{eqTFC}
   r_{d,t} = 1 + log_{e} f_{d,t}
 \end{equation}
 \begin{equation}\label{eq:TFC2}
@@ -213,11 +226,11 @@ Um die Ähnlichkeit von zwei Künstlern zu bestimmen wird eine Ähnlichkeitsfunk
   S_{d_1, d_2} = \frac{\sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}{W_{d_1} \cdot W_{d_2}}
 \end{equation}
 
-Die zweite Ähnlichkeitsfunktion, die bei der Ähnlichkeitsbestimmung standardmäßig verwendet wird, ist die Jaccard-Ähnlichkeit \eqref{eg:jaccard}. Sie besteht aus demselben Zähler wie bei der Kosinus-Ähnlichkeit, unterscheidet sich jedoch im Nenner. 
-\begin{equation}\label{eq:jaccard}
+Die zweite Ähnlichkeitsfunktion, die bei unserer Implementierung der Ähnlichkeitsbestimmung standardmäßig verwendet wird, ist die Jaccard-Ähnlichkeit \eqref{eqjaccard}. 
+\begin{equation}\label{eqjaccard}
   S_{d_1, d_2} = \frac{\sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}{W_{d_1}^2 + W_{d_2}^2 - \sum_{t \in T_{d_1, d_2}}{w_{d_1, t} \cdot w_{d_2, t}}}
 \end{equation}
-Die Jaccard-Ähnlichkeit wird aus der Durchschnittsmenge der beiden Vektoren (die Terme, die bei beiden Dokumenten vorkommen) dividiert durch die Vereinigung der beiden Vektoren gebildet. Bei der Implementierung ist zu beachten, dass bei der Verwendung von der Jaccard-Funktion aus Packages (z.B. das NLTK-Package) nicht berücksichtigt wird, dass die  Durchschnittsbildung auf unseren Gewichtungen und nicht auf den ursprünglichen Term-Strings passiert. Dies bedeutet, dass wenn wir unsere Gewichtvektoren zur Bestimmung der Ähnlichkeit übergeben würden, falsche Ergebnisse geliefert werden (da z.B. 0.5 und 0.7 nicht gleich sind, und somit nicht in der Durchschnittsmenge liegen, obwohl sie es aufgrund der Gemeinsamkeit des ursprünglichen Terms tun sollten).
+Die Jaccard-Ähnlichkeit wird aus der Durchschnittsmenge der beiden Vektoren (die Terme, die bei beiden Dokumenten vorkommen) dividiert durch die Vereinigung der beiden Vektoren gebildet.
 
 Die Implementierung der Jaccard- und der Kosinusfunktion sind in der Klasse \texttt{SimilarityMeasurer} zu finden. Auch hier kann man mittels der Parameterübergabe (als dritter optionaler Parameter) an die /tf\_idf/main.py bestimmen, welche der beiden Funktionen ausgeführt wird.
 
