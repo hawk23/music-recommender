@@ -165,8 +165,6 @@ main.py [data-Ordner]['standard_tf_idf' oder 'alternative_tf_idf']
 Wenn keine Parameter übergeben werden, wird standardmäßig \texttt{'../data standard\_tf\_idf jaccard\_measure'} als Argument gesetzt. 
 %main methode ->  inputparameter
 %Indexwörterbuch (welches)
-%Term Weighting -> standard und alternativ
-%Similarity Measure -> jaccard, cosine
 
 
 \subsection{Preprocessing}
@@ -321,6 +319,25 @@ Nach unseren ersten Testläufen mussten wir jedoch feststellen, dass gewisse von
 
 Bevor wir den Listening Event Fetcher erneut gestartet haben, wollten wir die Verteilung der Benutzer, bezüglich Herkunft, Alter sowie den Fakt ob diese häufig aktiv sind, berücksichtigen. Hiervon haben wir uns eine Verbesserung unseres Empfehlungssystems erhofft. Leider stießen wir auch hier auf viele Probleme mit Funktionen des LastFM Frameworks. Diese Funktionen sollten wichtige Informationen über Benutzer liefern. Ferner wurden viele Benutzer durch diese Klassifizierung unbrauchbar, da keine oder falsche Informationen vorlagen, wodurch wir entschieden diese Klassifizierung wieder zu entfernen.
 
+
+\textbf{Update}:
+Nachdem die Abgabefrist auf eine Woche verlängert wurde und der LastFm\_LE\_Fetcher nicht optimale Ergebnisse lieferte wurden nun von Herrn Schedl neue Testdaten zur Verfügung gestellt. Damit diese Datensätze richtig geparst werden können, mussten wir in der Converter\_LE-UAM den abgefragten Index ändern, da nun keine Tracks mehr vorhanden sind.
+
+\textbf{Evaluate\_Recommender.py}: In diesem Abschnitt wird die Berechnung von F1, Baseline und k-nearest beschrieben.
+Der nachfolgende Quellcode beschreibt wie wir die F1 Berechnung, unter Verwendung von der durchschnittlichen Precision und dem durchschnittlichen Recall, durchgeführt haben.
+
+\begin{python}
+	# calculate f1 measure
+	f1 = 2 * ((avg_prec * avg_rec) / (avg_prec + avg_rec))
+\end{python}
+
+Baseline:
+// TODO Mario
+
+k-nearest:
+// TODO Mario
+
+
 \subsection{Validation}
 
 Um die Qualität der Recommendations beurteilen zu können, haben wir eine Baseline-Methode implementiert. Die Baseline-Methode wählt für den User eine zufällige Anzahl an Artists, aus für die noch keine Listening-Events (für den betreffenden User) existieren.
@@ -348,6 +365,24 @@ def recommend_baseline (UAM, seed_uidx, seed_aidx_train):
     return list(set(recommended_artists_idx))
 \end{python}
 
+\subsection{Evaluierung}
+Wir haben mehrere Testläufe durchgeführt. Einen mit der von uns neu implementierten Baseline Funktion sowie der von uns auf k-nearest erweiterten CF Funktion mit unterschiedlicher Parametriesierung. Die nachfolgende Auflistung zeigt unsere Ergebnisse für die genannten Testläufe:
+
+\begin{center}
+	\resizebox{!}{1.5cm} {
+    \begin{tabular}{ | l | l | l | l |}
+    \hline
+    \multicolumn{4}{|c|}{rec\_aidx = recommend\_CF(copy\_UAM, u, train\_aidx, K)} \\ \hline
+    MAP & MAR & F1 & K \\ \hline
+    0.16 & 0.81 & 0.27 & K = 1 \\ \hline
+    0.14 & 1.39 & 0.26 & K = 2 mit Vereinigung \\ \hline
+    0.13 & 3.07 & 0.25 & K = 4 mit Vereinigung \\ \hline
+    0.13 & 5.08 & 0.26 & K = 6 mit Vereinigung \\ \hline
+    0.13 & 36.52 & 0.26 & Baseline \\ 
+    \hline
+    \end{tabular}
+    }
+\end{center}
 
 % Start of "Sample References" section
 
