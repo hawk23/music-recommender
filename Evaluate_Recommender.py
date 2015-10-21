@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 len(train_aidx)) + ", Test items: " + str(len(test_aidx)),      # the comma at the end avoids line break
             # Call recommend function
             copy_UAM = UAM.copy()       # we need to create a copy of the UAM, otherwise modifications within recommend function will effect the variable
-#            rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
+            #rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
             rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
             print "Recommended items: ", len(rec_aidx)
 
