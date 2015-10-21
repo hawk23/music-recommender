@@ -64,21 +64,22 @@ def recommend_CF(UAM, seed_uidx, seed_aidx_train, K = 1):
     # Sort similarities to all others
     sort_idx = np.argsort(sim_users)  # sort in ascending order
 
-    # Select the closest neighbor to seed user (which is the last but one; last one is user u herself!)
-    neighbor_idx = sort_idx[-2:-1][0]
-#    print "The closest user to user " + str(seed_uidx) + " is " + str(neighbor_idx) + "."
-#    print "The closest user to user " + users[seed_uidx] + " is user " + users[neighbor_idx] + "."
-
     # Get all artist indices the seed user and her closest neighbor listened to, i.e., element with non-zero entries in UAM
     artist_idx_u = seed_aidx_train                      # indices of artists in training set user
-    artist_idx_n = np.nonzero(UAM[neighbor_idx, :])     # indices of artists user u's neighbor listened to
+
+    # Select the k closest neighbor to seed user (which is the last but one; last one is user u herself!)
+    kneighbor_idx = sort_idx[-(1+K):-1]
+
+    artist_idx_n = [] # indices of artists user u's neighbor(s) listened to
+    for neighbor_idx in kneighbor_idx:
+        listened_to = np.nonzero(UAM[neighbor_idx, :]) # indices of artists user u's neighbor listened to
+        artist_idx_n = np.union1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
 
     # Compute the set difference between seed user's neighbor and seed user,
     # i.e., artists listened to by the neighbor, but not by seed user.
     # These artists are recommended to seed user.
 
-    # np.nonzero returns a tuple of arrays, so we need to take the first element only when computing the set difference
-    recommended_artists_idx = np.setdiff1d(artist_idx_n[0], artist_idx_u)
+    recommended_artists_idx = np.setdiff1d(artist_idx_n, artist_idx_u)
     # or alternatively, convert to a numpy array by ...
     # artist_idx_n.arrnp.setdiff1d(np.array(artist_idx_n), np.array(artist_idx_u))
 
@@ -142,8 +143,8 @@ if __name__ == '__main__':
             # Call recommend function
             copy_UAM = UAM.copy()       # we need to create a copy of the UAM, otherwise modifications within recommend function will effect the variable
             #rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
-            #rec_aidx = recommend_CF(copy_UAM, u, train_aidx, K)
-            rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
+            rec_aidx = recommend_CF(copy_UAM, u, train_aidx, 2)
+            #rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
             print "Recommended items: ", len(rec_aidx)
 
             # Compute performance measures
