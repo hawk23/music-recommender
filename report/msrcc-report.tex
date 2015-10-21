@@ -163,8 +163,7 @@ main.py [data-Ordner]['standard_tf_idf' oder 'alternative_tf_idf']
 ['jaccard_measure' oder 'cosine_measure']
 \end{python}
 Wenn keine Parameter übergeben werden, wird standardmäßig \texttt{'../data standard\_tf\_idf jaccard\_measure'} als Argument gesetzt. 
-%main methode ->  inputparameter
-%Indexwörterbuch (welches)
+
 
 \subsection{Preprocessing}
 Für das Preprocessing wurde der bereitgestellte Code verwendet. Dieses verarbeitet die HTML-Dokumente um zu einem Bag of Words für jeden Künstler zu gelangen. Dieser wurde um die Performance zu verbessern angepasst, sodass das Preprocessing mit Threads durchgeführt wird. Jeder \texttt{Prepocessing}-Thread erhält dabei den Dateipfad zu einem Künstler als Konstruktor-Argument. Das Ergebnis des Preprocessings wird in ein Dictionary mit dem Künstler als Key und den durch das Preprocessing erhaltenen Wörtern als Value gespeichert. Aufgrunddessen dass mehrere Threads auf das Dictionary zugreifen, wird dieses beim Schreiben des Ergebnisses durch ein \texttt{RLock} gelockt.
@@ -376,7 +375,7 @@ Wir haben mehrere Testläufe durchgeführt. Einen mit der von uns neu implementi
     0.16 & 0.81 & 0.27 & K = 1 \\ \hline
     0.14 & 1.39 & 0.26 & K = 2 mit Vereinigung \\ \hline
     0.13 & 3.07 & 0.25 & K = 4 mit Vereinigung \\ \hline
-    0.13 & 5.08 & 0.26 & K = 6 mit Vereinigung \\ \hline
+    0.13 & 5.08 & 0.26 & K = 8 mit Vereinigung \\ \hline
     0.13 & 36.52 & 0.26 & Baseline \\ 
     \hline
     \end{tabular}
