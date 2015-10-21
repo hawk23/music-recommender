@@ -73,12 +73,15 @@ def recommend_CF(UAM, seed_uidx, seed_aidx_train, K = 1):
     artist_idx_n = [] # indices of artists user u's neighbor(s) listened to
     for neighbor_idx in kneighbor_idx:
         listened_to = np.nonzero(UAM[neighbor_idx, :]) # indices of artists user u's neighbor listened to
-        # artist_idx_n = np.union1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
 
+        artist_idx_n = np.union1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
+
+        '''
         if len(artist_idx_n) == 0:
             artist_idx_n = listened_to[0]
         else:
             artist_idx_n = np.intersect1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
+        '''
 
     # Compute the set difference between seed user's neighbor and seed user,
     # i.e., artists listened to by the neighbor, but not by seed user.
