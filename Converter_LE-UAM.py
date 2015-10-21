@@ -6,7 +6,7 @@ import csv
 import numpy as np
 
 # Parameters
-LE_FILE = "LE.txt"                      # aggregated listening events, to read from
+LE_FILE = "mrs_le.txt"                      # aggregated listening events, to read from
 UAM_FILE = "UAM.txt"                    # user-artist-matrix (UAM)
 ARTISTS_FILE = "UAM_artists.txt"        # artist names for UAM
 USERS_FILE = "UAM_users.txt"            # user names for UAM
@@ -26,8 +26,8 @@ if __name__ == '__main__':
         for row in reader:
             user = row[0]
             artist = row[1]
-            track = row[2]
-            time = row[3]
+            # track = row[2]
+            time = row[2]
 
             # Create ordered set (list) of unique elements (for artists / tracks)
             artists[artist] = None
@@ -43,8 +43,8 @@ if __name__ == '__main__':
         for row in reader:
             user = row[0]
             artist = row[1]
-            track = row[2]
-            time = row[3]
+            #  = row[2]
+            time = row[2]
             # Increase listening counter for (user, artist) pair/tuple
             listening_events[(user, artist)] += 1
 

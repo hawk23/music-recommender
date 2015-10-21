@@ -14,7 +14,7 @@ ARTISTS_FILE = "UAM_artists.txt"    # artist names for UAM
 USERS_FILE = "UAM_users.txt"        # user names for UAM
 
 NF = 5              # number of folds to perform in cross-validation
-
+K = 2               # parameter for k nearest function
 
 # Function to read metadata (users or artists)
 def read_from_file(filename):
@@ -32,7 +32,8 @@ def read_from_file(filename):
 # Function that implements a CF recommender. It takes as input the UAM, metadata (artists and users),
 # the index of the seed user (to make predictions for) and the indices of the seed user's training artists.
 # It returns a list of recommended artist indices
-def recommend_CF(UAM, seed_uidx, seed_aidx_train):
+def recommend_CF(UAM, seed_uidx, seed_aidx_train, K = 1):
+
     # UAM               user-artist-matrix
     # seed_uidx         user index of seed user
     # seed_aidx_train   indices of training artists for seed user
@@ -63,21 +64,30 @@ def recommend_CF(UAM, seed_uidx, seed_aidx_train):
     # Sort similarities to all others
     sort_idx = np.argsort(sim_users)  # sort in ascending order
 
-    # Select the closest neighbor to seed user (which is the last but one; last one is user u herself!)
-    neighbor_idx = sort_idx[-2:-1][0]
-#    print "The closest user to user " + str(seed_uidx) + " is " + str(neighbor_idx) + "."
-#    print "The closest user to user " + users[seed_uidx] + " is user " + users[neighbor_idx] + "."
-
     # Get all artist indices the seed user and her closest neighbor listened to, i.e., element with non-zero entries in UAM
     artist_idx_u = seed_aidx_train                      # indices of artists in training set user
-    artist_idx_n = np.nonzero(UAM[neighbor_idx, :])     # indices of artists user u's neighbor listened to
+
+    # Select the k closest neighbor to seed user (which is the last but one; last one is user u herself!)
+    kneighbor_idx = sort_idx[-(1+K):-1]
+
+    artist_idx_n = [] # indices of artists user u's neighbor(s) listened to
+    for neighbor_idx in kneighbor_idx:
+        listened_to = np.nonzero(UAM[neighbor_idx, :]) # indices of artists user u's neighbor listened to
+
+        artist_idx_n = np.union1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
+
+        '''
+        if len(artist_idx_n) == 0:
+            artist_idx_n = listened_to[0]
+        else:
+            artist_idx_n = np.intersect1d(listened_to[0], artist_idx_n) # np.nonzero returns a tuple of arrays, so we need to take the first element only
+        '''
 
     # Compute the set difference between seed user's neighbor and seed user,
     # i.e., artists listened to by the neighbor, but not by seed user.
     # These artists are recommended to seed user.
 
-    # np.nonzero returns a tuple of arrays, so we need to take the first element only when computing the set difference
-    recommended_artists_idx = np.setdiff1d(artist_idx_n[0], artist_idx_u)
+    recommended_artists_idx = np.setdiff1d(artist_idx_n, artist_idx_u)
     # or alternatively, convert to a numpy array by ...
     # artist_idx_n.arrnp.setdiff1d(np.array(artist_idx_n), np.array(artist_idx_u))
 
@@ -140,8 +150,9 @@ if __name__ == '__main__':
                 len(train_aidx)) + ", Test items: " + str(len(test_aidx)),      # the comma at the end avoids line break
             # Call recommend function
             copy_UAM = UAM.copy()       # we need to create a copy of the UAM, otherwise modifications within recommend function will effect the variable
-#            rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
-            rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
+            #rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
+            rec_aidx = recommend_CF(copy_UAM, u, train_aidx, K)
+            #rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
             print "Recommended items: ", len(rec_aidx)
 
             # Compute performance measures
@@ -160,11 +171,16 @@ if __name__ == '__main__':
             avg_prec += prec / (NF * no_users)
             avg_rec += rec / (NF * no_users)
 
-            # Output precision and recall of current fold
+             # Output precision and recall of current fold
             print ("\tPrecision: %.2f, Recall:  %.2f" % (prec, rec))
 
             # Increase fold counter
             fold += 1
 
+    # calculate f1 measure
+    f1 = 2 * ((avg_prec * avg_rec) / (avg_prec + avg_rec))
+
     # Output mean average precision and recall
-    print ("\nMAP: %.2f, MAR  %.2f" % (avg_prec, avg_rec))
+    print ("\nMAP: %.2f, MAR: %.2f, F1: %.2f" % (avg_prec, avg_rec, f1))
+
+
