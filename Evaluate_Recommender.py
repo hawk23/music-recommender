@@ -14,7 +14,7 @@ ARTISTS_FILE = "UAM_artists.txt"    # artist names for UAM
 USERS_FILE = "UAM_users.txt"        # user names for UAM
 
 NF = 5              # number of folds to perform in cross-validation
-K = 5
+K = 4               # parameter for k nearest function
 
 # Function to read metadata (users or artists)
 def read_from_file(filename):
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             # Call recommend function
             copy_UAM = UAM.copy()       # we need to create a copy of the UAM, otherwise modifications within recommend function will effect the variable
             #rec_aidx = recommend_CF(copy_UAM, u, train_aidx)
-            rec_aidx = recommend_CF(copy_UAM, u, train_aidx, 2)
+            rec_aidx = recommend_CF(copy_UAM, u, train_aidx, K)
             #rec_aidx = recommend_baseline(copy_UAM, u, train_aidx)
             print "Recommended items: ", len(rec_aidx)
 
@@ -173,6 +173,6 @@ if __name__ == '__main__':
     f1 = 2 * ((avg_prec * avg_rec) / (avg_prec + avg_rec))
 
     # Output mean average precision and recall
-    print ("\nMAP: %.2f, MAR: %.2f, F1 measure: %.2f" % (avg_prec, avg_rec, f1))
+    print ("\nMAP: %.2f, MAR: %.2f, F1: %.2f" % (avg_prec, avg_rec, f1))
 
 
